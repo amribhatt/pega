@@ -29,15 +29,25 @@ This interactive script will:
 - Create `.env` files for both components
 - Configure the MCP server and ADK agent
 
-### 3. Install Dependencies
+### 3. Create Virtual Environments
 
 ```bash
-# Install MCP server dependencies
+# Create virtual environment for MCP server
 cd pega-mcp
+python -m venv .venv
+.venv\Scripts\activate  # On Windows
+# source .venv/bin/activate  # On Linux/Mac
+
+# Install MCP server dependencies
 pip install -r requirements.txt
 
-# Install ADK agent dependencies  
+# Create virtual environment for ADK agent
 cd ../pega-adk
+python -m venv .venv
+.venv\Scripts\activate  # On Windows
+# source .venv/bin/activate  # On Linux/Mac
+
+# Install ADK agent dependencies
 pip install -r requirements.txt
 ```
 
@@ -46,13 +56,25 @@ pip install -r requirements.txt
 **Terminal 1 - Start MCP Server:**
 ```bash
 cd pega-mcp
+.venv\Scripts\activate  # On Windows
+# source .venv/bin/activate  # On Linux/Mac
 python server.py
 ```
 
 **Terminal 2 - Start ADK Agent:**
 ```bash
 cd pega-adk
-python -m pega_adk_agent.agent
+.venv\Scripts\activate  # On Windows
+# source .venv/bin/activate  # On Linux/Mac
+adk run pega_adk_agent
+```
+
+Or to start with web interface:
+```bash
+cd pega-adk
+.venv\Scripts\activate  # On Windows
+# source .venv/bin/activate  # On Linux/Mac
+adk web
 ```
 
 ## Configuration
@@ -150,13 +172,16 @@ pega/
 
 3. **MCP server won't start**
    - Check port 8080 is available
+   - Verify virtual environment is activated
    - Verify all dependencies are installed
    - Check `.env` file exists in `pega-mcp/` directory
 
 4. **ADK agent can't connect**
    - Ensure MCP server is running on localhost:8080
    - Check MCP server URL in `pega-adk/.env`
+   - Verify virtual environment is activated
    - Verify ADK dependencies are installed
+   - Use `adk run pega_adk_agent` or `adk web` to start the agent
 
 ### Security Notes
 
@@ -182,6 +207,12 @@ Edit `pega-adk/pega_adk_agent/agent.py` to:
 - Modify agent instructions
 - Add custom tools
 - Update agent behavior
+
+### ADK Commands
+
+- `adk run pega_adk_agent` - Start agent in terminal mode
+- `adk web` - Start agent with web interface
+- `adk --help` - Show all available commands
 
 ## License
 
