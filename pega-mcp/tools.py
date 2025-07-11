@@ -67,7 +67,7 @@ async def get_pega_auth_headers() -> Dict[str, str]:
     
     # Re-authenticate when needed
     try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(config.TIMEOUT)) as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(config.TIMEOUT), verify=config.VERIFY_SSL) as client:
             response = await client.post(
                 config.token_url,
                 data={
@@ -126,7 +126,7 @@ async def verify_pega_connectivity() -> str:
     try:
         headers = await get_pega_auth_headers()
         
-        async with httpx.AsyncClient(timeout=httpx.Timeout(config.TIMEOUT)) as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(config.TIMEOUT), verify=config.VERIFY_SSL) as client:
             start_time = time.time()
             response = await client.get(url, headers=headers)
             response_time = (time.time() - start_time) * 1000
@@ -167,7 +167,7 @@ async def get_case_types() -> str:
     try:
         headers = await get_pega_auth_headers()
         
-        async with httpx.AsyncClient(timeout=httpx.Timeout(config.TIMEOUT)) as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(config.TIMEOUT), verify=config.VERIFY_SSL) as client:
             response = await client.get(url, headers=headers)
             
             if response.status_code == 200:
@@ -217,7 +217,7 @@ async def create_case(case_type_id: str) -> str:
     try:
         headers = await get_pega_auth_headers()
         
-        async with httpx.AsyncClient(timeout=httpx.Timeout(config.TIMEOUT)) as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(config.TIMEOUT), verify=config.VERIFY_SSL) as client:
             response = await client.post(url, headers=headers, json=payload)
             
             if response.status_code in [200, 201]:

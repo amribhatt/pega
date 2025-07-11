@@ -13,7 +13,7 @@ async def get_case_types_resource() -> str:
     try:
         headers = await get_pega_auth_headers()
         
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=config.VERIFY_SSL) as client:
             response = await client.get(url, headers=headers)
             
             if response.status_code == 200:
@@ -43,7 +43,7 @@ async def get_connection_status() -> str:
     try:
         headers = await get_pega_auth_headers()
         
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=config.VERIFY_SSL) as client:
             start_time = time.time()
             response = await client.get(url, headers=headers)
             response_time = (time.time() - start_time) * 1000
