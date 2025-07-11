@@ -18,16 +18,20 @@ git clone https://github.com/amribhatt/pega.git
 cd pega
 ```
 
-### 2. Run Setup
+### 2. Configure Environment
 
 ```bash
-python setup.py
+# Copy environment templates
+cd pega-mcp
+copy env.template .env
+
+cd ../pega-adk
+copy env.template .env
 ```
 
-This interactive script will:
-- Prompt for your Pega Platform credentials
-- Create `.env` files for both components
-- Configure the MCP server and ADK agent
+Edit the `.env` files with your actual credentials:
+- `pega-mcp/.env` - Pega Platform credentials
+- `pega-adk/.env` - ADK agent configuration
 
 ### 3. Create Virtual Environments
 
@@ -90,7 +94,7 @@ You'll need these from your Pega Platform:
 
 ### Environment Files
 
-The setup creates two `.env` files:
+Copy the template files and edit with your credentials:
 
 **`pega-mcp/.env`** - MCP Server Configuration:
 ```
@@ -143,18 +147,19 @@ Agent: "Case created successfully with ID: LOAN-2024-001"
 
 ```
 pega/
-├── setup.py                 # Interactive setup script
 ├── README.md               # This file
 ├── pega-mcp/              # MCP Server
 │   ├── server.py          # MCP server implementation
 │   ├── tools.py           # Pega API tools
 │   ├── resources.py       # MCP resources
 │   ├── requirements.txt   # MCP dependencies
+│   ├── env.template      # Environment template
 │   └── dx-apis/          # API documentation
 └── pega-adk/             # ADK Agent
     ├── pega_adk_agent/
     │   └── agent.py      # ADK agent implementation
-    └── requirements.txt   # ADK dependencies
+    ├── requirements.txt   # ADK dependencies
+    └── env.template      # Environment template
 ```
 
 ## Troubleshooting
@@ -162,7 +167,8 @@ pega/
 ### Common Issues
 
 1. **"Missing configuration" error**
-   - Run `python setup.py` to create `.env` files
+   - Copy `env.template` to `.env` in both directories
+   - Edit `.env` files with your actual credentials
    - Ensure all required Pega credentials are provided
 
 2. **Connection failed**
