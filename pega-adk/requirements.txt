@@ -1,0 +1,2 @@
+# ADK Agent Dependencies
+google-adk>=1.2.0
