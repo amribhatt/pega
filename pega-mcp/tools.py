@@ -66,30 +66,54 @@ async def get_pega_auth_headers() -> Dict[str, str]:
         }
     
     # Re-authenticate when needed
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            config.token_url,
-            data={
-                'grant_type': 'client_credentials',
-                'client_id': config.CLIENT_ID,
-                'client_secret': config.CLIENT_SECRET
-            },
-            headers={'Content-Type': 'application/x-www-form-urlencoded'}
-        )
-        
-        if response.status_code == 200:
-            token_data = response.json()
-            _access_token = token_data.get('access_token')
-            _token_expires_at = time.time() + token_data.get('expires_in', 3600)
-            logger.info("Authentication successful")
-            return {
-                "Authorization": f"Bearer {_access_token}",
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
-        else:
-            logger.error(f"Authentication failed: {response.status_code}")
-            raise Exception(f"Authentication failed: {response.status_code}")
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(config.TIMEOUT)) as client:
+            response = await client.post(
+                config.token_url,
+                data={
+                    'grant_type': 'client_credentials',
+                    'client_id': config.CLIENT_ID,
+                    'client_secret': config.CLIENT_SECRET
+                },
+                headers={'Content-Type': 'application/x-www-form-urlencoded'}
+            )
+            
+            if response.status_code == 200:
+                token_data = response.json()
+                _access_token = token_data.get('access_token')
+                _token_expires_at = time.time() + token_data.get('expires_in', 3600)
+                logger.info("Authentication successful")
+                return {
+                    "Authorization": f"Bearer {_access_token}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                }
+            else:
+                error_msg = f"Authentication failed with status code {response.status_code}"
+                try:
+                    error_data = response.json()
+                    if 'error_description' in error_data:
+                        error_msg += f": {error_data['error_description']}"
+                    elif 'error' in error_data:
+                        error_msg += f": {error_data['error']}"
+                except:
+                    error_msg += f" - {response.text[:200]}"
+                
+                logger.error(error_msg)
+                raise Exception(error_msg)
+                
+    except httpx.ConnectError as e:
+        error_msg = f"Connection error to Pega Platform: {str(e)}"
+        logger.error(error_msg)
+        raise Exception(error_msg)
+    except httpx.TimeoutException as e:
+        error_msg = f"Timeout connecting to Pega Platform after {config.TIMEOUT}s"
+        logger.error(error_msg)
+        raise Exception(error_msg)
+    except Exception as e:
+        error_msg = f"Authentication error: {str(e)}"
+        logger.error(error_msg)
+        raise Exception(error_msg)
 
 # ============================================================================
 # Business Logic Functions (ServiceNow Style)
@@ -102,7 +126,7 @@ async def verify_pega_connectivity() -> str:
     try:
         headers = await get_pega_auth_headers()
         
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(config.TIMEOUT)) as client:
             start_time = time.time()
             response = await client.get(url, headers=headers)
             response_time = (time.time() - start_time) * 1000
@@ -110,13 +134,31 @@ async def verify_pega_connectivity() -> str:
             if response.status_code == 200:
                 output = f"Connected to Pega successfully in {response_time:.1f}ms"
             else:
-                output = f"Connection failed: {response.status_code}"
+                error_msg = f"Connection failed with status code {response.status_code}"
+                try:
+                    error_data = response.json()
+                    if 'error_description' in error_data:
+                        error_msg += f": {error_data['error_description']}"
+                    elif 'error' in error_data:
+                        error_msg += f": {error_data['error']}"
+                except:
+                    error_msg += f" - {response.text[:200]}"
+                output = error_msg
             
             return output
             
+    except httpx.ConnectError as e:
+        error_msg = f"Connection error to Pega Platform: {str(e)}"
+        logger.error(error_msg)
+        return error_msg
+    except httpx.TimeoutException as e:
+        error_msg = f"Timeout connecting to Pega Platform after {config.TIMEOUT}s"
+        logger.error(error_msg)
+        return error_msg
     except Exception as e:
-        logger.error(f"Connectivity error: {e}")
-        return f"Connection error: {str(e)}"
+        error_msg = f"Connectivity error: {str(e)}"
+        logger.error(error_msg)
+        return error_msg
 
 async def get_case_types() -> str:
     """Get available case types"""
@@ -125,7 +167,7 @@ async def get_case_types() -> str:
     try:
         headers = await get_pega_auth_headers()
         
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(config.TIMEOUT)) as client:
             response = await client.get(url, headers=headers)
             
             if response.status_code == 200:
@@ -141,13 +183,31 @@ async def get_case_types() -> str:
                 else:
                     output = "No case types found"
             else:
-                output = f"Failed to get case types: {response.status_code}"
+                error_msg = f"Failed to get case types with status code {response.status_code}"
+                try:
+                    error_data = response.json()
+                    if 'error_description' in error_data:
+                        error_msg += f": {error_data['error_description']}"
+                    elif 'error' in error_data:
+                        error_msg += f": {error_data['error']}"
+                except:
+                    error_msg += f" - {response.text[:200]}"
+                output = error_msg
             
             return output
             
+    except httpx.ConnectError as e:
+        error_msg = f"Connection error to Pega Platform: {str(e)}"
+        logger.error(error_msg)
+        return error_msg
+    except httpx.TimeoutException as e:
+        error_msg = f"Timeout connecting to Pega Platform after {config.TIMEOUT}s"
+        logger.error(error_msg)
+        return error_msg
     except Exception as e:
-        logger.error(f"Error getting case types: {e}")
-        return f"Error getting case types: {str(e)}"
+        error_msg = f"Error getting case types: {str(e)}"
+        logger.error(error_msg)
+        return error_msg
 
 async def create_case(case_type_id: str) -> str:
     """Create a new case"""
@@ -157,7 +217,7 @@ async def create_case(case_type_id: str) -> str:
     try:
         headers = await get_pega_auth_headers()
         
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(config.TIMEOUT)) as client:
             response = await client.post(url, headers=headers, json=payload)
             
             if response.status_code in [200, 201]:
@@ -165,10 +225,28 @@ async def create_case(case_type_id: str) -> str:
                 case_id = data.get('ID', data.get('id', 'Unknown'))
                 output = f"Case created successfully with ID: {case_id}"
             else:
-                output = f"Failed to create case: {response.status_code}"
+                error_msg = f"Failed to create case with status code {response.status_code}"
+                try:
+                    error_data = response.json()
+                    if 'error_description' in error_data:
+                        error_msg += f": {error_data['error_description']}"
+                    elif 'error' in error_data:
+                        error_msg += f": {error_data['error']}"
+                except:
+                    error_msg += f" - {response.text[:200]}"
+                output = error_msg
             
             return output
             
+    except httpx.ConnectError as e:
+        error_msg = f"Connection error to Pega Platform: {str(e)}"
+        logger.error(error_msg)
+        return error_msg
+    except httpx.TimeoutException as e:
+        error_msg = f"Timeout connecting to Pega Platform after {config.TIMEOUT}s"
+        logger.error(error_msg)
+        return error_msg
     except Exception as e:
-        logger.error(f"Error creating case: {e}")
-        return f"Error creating case: {str(e)}" 
+        error_msg = f"Error creating case: {str(e)}"
+        logger.error(error_msg)
+        return error_msg 

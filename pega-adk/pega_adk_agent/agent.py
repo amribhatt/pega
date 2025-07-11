@@ -6,7 +6,7 @@ from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPServerPa
 # Create the MCP toolset connection
 mcp_toolset = MCPToolset(
     connection_params=StreamableHTTPServerParams(
-        url="http://localhost:8080/mcp/"  # Match your MCP server URL
+        url="http://localhost:8082/mcp/"  # Match your MCP server URL
     )
 )
 
@@ -59,6 +59,12 @@ root_agent = Agent(
        
        - If user specifically asks for "raw output", "raw response", or "raw data":
          Return the EXACT raw output from tools as a section called "Raw Output" with additional commentary explaining what the data represents
+       
+       - IMPORTANT: If a tool fails or returns an error message:
+         * ALWAYS share the complete raw error response from the tool
+         * Include the error message, status code, and any additional error details
+         * Explain what the error means and suggest possible solutions
+         * Format as: "Error occurred: [raw error message]. This means [explanation]. Try [suggestions]."
     
     4. Handle non-tool interactions:
        - Greetings: Respond politely without tools
